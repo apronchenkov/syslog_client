@@ -1,3 +1,4 @@
+#define _BSD_SOURCE
 #include "syslog_client.h"
 #include "syslog_client_ext.h"
 #include "syslog_local_transport.h"

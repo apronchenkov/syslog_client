@@ -15,7 +15,7 @@ OPTFLAGS += -g -O2
 all: libsyslog_client.so sample
 
 libsyslog_client.so: ${SRCS}
-	${CC} ${CPPFLAGS} ${OPTFLAGS} -shared -o $@ $(filter %.c, ${SRCS})
+	${CC} ${CPPFLAGS} ${OPTFLAGS} -fPIC -shared -o $@ $(filter %.c, ${SRCS})
 
 sample: libsyslog_client.so sample.o
 	${CC} ${CPPFLAGS} ${OPTFLAGS} -o $@ sample.c -L . -lsyslog_client
