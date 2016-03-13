@@ -1,13 +1,15 @@
 .PHONY: all clean
 
 SRCS = \
-	syslog_client.c \
-	syslog_local_transport.c \
-	syslog_local_transport.h \
-	unix_socket.c \
-	unix_socket.h \
 	include/syslog_client.h \
-	include/syslog_client_ext.h
+	include/syslog_facility.h \
+	include/syslog_message_format.h \
+	include/syslog_severity.h \
+	include/syslog_transport.h \
+	syslog_client.c \
+	syslog_transport.c \
+	unix_socket.c \
+	unix_socket.h
 
 CPPFLAGS += -Wall -Wextra -pedantic -std=c99 -I include
 OPTFLAGS += -g -O2

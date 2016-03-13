@@ -1,20 +1,20 @@
-#include "syslog_local_transport.h"
+#include "syslog_transport.h"
 #include "unix_socket.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct syslog_local_transport syslog_local_transport;
+typedef struct syslog_transport_default syslog_transport_default;
 
-struct syslog_local_transport {
+struct syslog_transport_default {
   syslog_transport base;
   pthread_mutex_t lock;
   int socket_type;
   int socket;
 };
 
-static void syslog_local_transport_close(syslog_local_transport *self) {
+static void syslog_transport_default_close(syslog_transport_default *self) {
   if (!self->socket_type) {
     unix_socket_close(self->socket);
     self->socket_type = 0;
@@ -22,17 +22,17 @@ static void syslog_local_transport_close(syslog_local_transport *self) {
   }
 }
 
-void syslog_local_transport_destroy(syslog_local_transport *self) {
+static void syslog_transport_default_destroy(syslog_transport_default *self) {
   pthread_mutex_destroy(&self->lock);
-  syslog_local_transport_close(self);
+  syslog_transport_default_close(self);
   free(self);
 }
 
-static bool syslog_local_transport_reconnect(syslog_local_transport *self) {
+static bool syslog_transport_default_reconnect(syslog_transport_default *self) {
   static const char *PATHS[] = {"/dev/log", "/var/run/syslog", "/var/run/log",
                                 NULL};
   static const int TYPES[] = {SOCK_DGRAM, SOCK_STREAM, 0};
-  syslog_local_transport_close(self);
+  syslog_transport_default_close(self);
   for (int i = 0; PATHS[i]; ++i) {
     for (int j = 0; TYPES[j]; ++j) {
       const int socket = unix_socket_open(PATHS[i], TYPES[j]);
@@ -61,9 +61,9 @@ static void iovec_advance(struct iovec *iov, size_t *iovcnt, size_t offset) {
   *iovcnt = i;
 }
 
-static bool syslog_local_transport_send_impl(syslog_local_transport *self,
-                                             const struct iovec *iov,
-                                             size_t iovcnt) {
+static bool syslog_transport_default_send_impl(syslog_transport_default *self,
+                                               const struct iovec *iov,
+                                               size_t iovcnt) {
   if (self->socket_type == SOCK_DGRAM) {
     return unix_socket_write(self->socket, iov, iovcnt) != -1;
   } else if (self->socket_type == SOCK_STREAM) {
@@ -87,34 +87,34 @@ static bool syslog_local_transport_send_impl(syslog_local_transport *self,
   }
 }
 
-bool syslog_local_transport_send(syslog_local_transport *self,
-                                 const struct iovec *iov, size_t iovcnt) {
+bool syslog_transport_default_send(syslog_transport_default *self,
+                                   const struct iovec *iov, size_t iovcnt) {
   pthread_mutex_lock(&self->lock);
-  if (syslog_local_transport_send_impl(self, iov, iovcnt) ||
-      (syslog_local_transport_reconnect(self) &&
-       syslog_local_transport_send_impl(self, iov, iovcnt))) {
+  if (syslog_transport_default_send_impl(self, iov, iovcnt) ||
+      (syslog_transport_default_reconnect(self) &&
+       syslog_transport_default_send_impl(self, iov, iovcnt))) {
     pthread_mutex_unlock(&self->lock);
     return true;
   } else {
     const int errno_copy = errno;
-    syslog_local_transport_close(self); /* drop current state */
+    syslog_transport_default_close(self); /* drop current state */
     pthread_mutex_unlock(&self->lock);
     errno = errno_copy;
     return false;
   }
 }
 
-syslog_transport *syslog_local_transport_create() {
-  syslog_local_transport *self = malloc(sizeof(syslog_local_transport));
+syslog_transport *syslog_transport_create_default() {
+  syslog_transport_default *self = malloc(sizeof(syslog_transport_default));
   if (!self) {
     return NULL;
   }
-  self->base.send = (syslog_transport_send_func)&syslog_local_transport_send;
+  self->base.send = (syslog_transport_send_func)&syslog_transport_default_send;
   self->base.destroy =
-      (syslog_transport_destroy_func)&syslog_local_transport_destroy;
+      (syslog_transport_destroy_func)&syslog_transport_default_destroy;
   self->socket_type = 0;
   self->socket = -1;
-  if (!syslog_local_transport_reconnect(self) ||
+  if (!syslog_transport_default_reconnect(self) ||
       pthread_mutex_init(&self->lock, NULL) != 0) {
     int errno_copy = errno;
     free(self);

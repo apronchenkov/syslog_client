@@ -1,7 +1,6 @@
 #define _BSD_SOURCE
 #include "syslog_client.h"
-#include "syslog_client_ext.h"
-#include "syslog_local_transport.h"
+#include "syslog_transport.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -41,22 +40,24 @@ static char *hostname() {
   return buffer;
 }
 
-syslog_client *syslog_open(int facility, const char *tag) {
-  syslog_transport *transport = syslog_local_transport_create();
+syslog_client *syslog_client_create_default(int facility, const char *tag) {
+  syslog_transport *transport = syslog_transport_create_default();
   if (transport) {
-    return syslog_open_ext(SYSLOG_MESSAGE_FORMAT_LOCAL, transport, facility,
-                           tag);
+    return syslog_client_create(SYSLOG_MESSAGE_FORMAT_LOCAL, transport,
+                                facility, tag);
   }
   return NULL;
 }
 
-syslog_client *syslog_open_ext(syslog_message_format message_format,
-                               syslog_transport *transport, int facility,
-                               const char *tag) {
-  int errno_copy;
+syslog_client *syslog_client_create(syslog_message_format message_format,
+                                    syslog_transport *transport, int facility,
+                                    const char *tag) {
   syslog_client *self = malloc(sizeof(syslog_client));
   if (!self) {
-    goto on_fail;
+    const int errno_copy = errno;
+    syslog_transport_destroy(transport);
+    errno = errno_copy;
+    return NULL;
   }
   self->message_format = message_format;
   self->facility = facility;
@@ -65,36 +66,69 @@ syslog_client *syslog_open_ext(syslog_message_format message_format,
   self->transport = transport;
   self->tag = strdup(tag);
   if (!self->tag) {
-    goto on_fail;
+    const int errno_copy = errno;
+    syslog_client_destroy(self);
+    errno = errno_copy;
+    return NULL;
   }
   self->tag_size = strlen(self->tag);
   self->hostname = hostname();
   if (!self->hostname) {
-    goto on_fail;
+    const int errno_copy = errno;
+    syslog_client_destroy(self);
+    errno = errno_copy;
+    return NULL;
   }
   self->hostname_size = strlen(self->hostname);
   return self;
-on_fail:
-  errno_copy = errno;
-  syslog_close(self);
-  errno = errno_copy;
-  return NULL;
 }
 
-void syslog_close(syslog_client *self) {
+void syslog_client_destroy(syslog_client *self) {
   if (self) {
     free(self->tag);
     free(self->hostname);
-    if (self->transport) {
-      self->transport->destroy(self->transport);
-    }
+    syslog_transport_destroy(self->transport);
     free(self);
   }
 }
 
-static bool syslog_send_ext_local(syslog_client *self, int serverity,
-                                  struct timeval *tv, const char *message,
-                                  size_t message_size) {
+bool syslog_client_printf(syslog_client *self, int serverity,
+                          const char *format, ...) {
+  struct timeval tv;
+  if (gettimeofday(&tv, NULL) == -1) {
+    return false;
+  }
+  char message[128];
+  va_list args;
+  va_start(args, format);
+  const int n = vsnprintf(message, sizeof(message), format, args);
+  va_end(args);
+  if (n < 0) {
+    errno = EINVAL; /* FIXME: What is the right code? */
+    return false;
+  }
+  if ((size_t)n < sizeof(message)) {
+    return syslog_client_send(self, serverity, &tv, message, (size_t)n);
+  }
+  char *big_message = malloc(n + 1);
+  if (big_message == NULL) {
+    return false;
+  }
+  va_start(args, format);
+  vsnprintf(big_message, n + 1, format, args);
+  va_end(args);
+  const bool result =
+      syslog_client_send(self, serverity, &tv, big_message, (size_t)n);
+  const int errno_copy = errno;
+  free(big_message);
+  errno = errno_copy;
+  return result;
+}
+
+static bool syslog_client_send_local_format(syslog_client *self, int serverity,
+                                            struct timeval *tv,
+                                            const char *message,
+                                            size_t message_size) {
   struct tm tm;
   localtime_r(&tv->tv_sec, &tm);
   char header[32];
@@ -123,9 +157,10 @@ static bool syslog_send_ext_local(syslog_client *self, int serverity,
   return self->transport->send(self->transport, iov, iovcnt);
 }
 
-static bool syslog_send_ext_remote(syslog_client *self, int serverity,
-                                   struct timeval *tv, const char *message,
-                                   size_t message_size) {
+static bool syslog_client_send_remote_format(syslog_client *self, int serverity,
+                                             struct timeval *tv,
+                                             const char *message,
+                                             size_t message_size) {
   struct tm tm;
   localtime_r(&tv->tv_sec, &tm);
   char header[32];
@@ -160,46 +195,16 @@ static bool syslog_send_ext_remote(syslog_client *self, int serverity,
   return self->transport->send(self->transport, iov, iovcnt);
 }
 
-bool syslog_send_ext(syslog_client *self, int serverity, struct timeval *tv,
-                     const char *message, size_t message_size) {
+bool syslog_client_send(syslog_client *self, int serverity, struct timeval *tv,
+                        const char *message, size_t message_size) {
   if (self && self->transport) {
     if (self->message_format == SYSLOG_MESSAGE_FORMAT_LOCAL) {
-      return syslog_send_ext_local(self, serverity, tv, message, message_size);
+      return syslog_client_send_local_format(self, serverity, tv, message,
+                                             message_size);
     } else if (self->message_format == SYSLOG_MESSAGE_FORMAT_REMOTE) {
-      return syslog_send_ext_remote(self, serverity, tv, message, message_size);
+      return syslog_client_send_remote_format(self, serverity, tv, message,
+                                              message_size);
     }
   }
   return false;
-}
-
-bool syslog_send(syslog_client *self, int serverity, const char *format, ...) {
-  struct timeval tv;
-  if (gettimeofday(&tv, NULL) == -1) {
-    return false;
-  }
-  char message[128];
-  va_list args;
-  va_start(args, format);
-  const int n = vsnprintf(message, sizeof(message), format, args);
-  va_end(args);
-  if (n < 0) {
-    errno = EINVAL; /* FIXME: What is the right code? */
-    return false;
-  }
-  if ((size_t)n < sizeof(message)) {
-    return syslog_send_ext(self, serverity, &tv, message, (size_t)n);
-  }
-  char *big_message = malloc(n + 1);
-  if (big_message == NULL) {
-    return false;
-  }
-  va_start(args, format);
-  vsnprintf(big_message, n + 1, format, args);
-  va_end(args);
-  const bool result =
-      syslog_send_ext(self, serverity, &tv, big_message, (size_t)n);
-  const int errno_copy = errno;
-  free(big_message);
-  errno = errno_copy;
-  return result;
 }
