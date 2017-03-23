@@ -1,16 +1,14 @@
 #pragma once
-#include "syslog_facility.h"
-#include "syslog_message_format.h"
-#include "syslog_severity.h"
-#include "syslog_transport.h"
+#include "SyslogFacility.h"
+#include "SyslogMessageFormat.h"
+#include "SyslogSeverity.h"
+#include "SyslogTransport.h"
 #include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct timeval;
 
 typedef struct SyslogClient SyslogClient;
 
@@ -41,7 +39,7 @@ bool SyslogClientPrintf(SyslogClient* self, int severity, const char* format,
 /**
  * Send a message to syslog.
  */
-bool SyslogClientSend(SyslogClient* self, int severity, struct timeval* tv,
+bool SyslogClientSend(SyslogClient* self, int severity, double unixTime,
                       const char* message, size_t messageSize);
 
 #ifdef __cplusplus

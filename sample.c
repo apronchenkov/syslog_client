@@ -1,4 +1,4 @@
-#include "syslog_client.h"
+#include "SyslogClient.h"
 
 int main(int argc, char** argv) {
   (void)argc;

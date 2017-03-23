@@ -1,8 +1,8 @@
 #define _BSD_SOURCE
-#include "syslog_client.h"
-#include "syslog_transport.h"
+#include "SyslogClient.h"
 #include <assert.h>
 #include <errno.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,6 +98,7 @@ bool SyslogClientPrintf(SyslogClient* self, int severity, const char* format,
   if (gettimeofday(&tv, NULL) == -1) {
     return false;
   }
+  const double unixTime = tv.tv_sec + 1e-6 * tv.tv_usec;
   char message[128];
   va_list args;
   va_start(args, format);
@@ -108,7 +109,7 @@ bool SyslogClientPrintf(SyslogClient* self, int severity, const char* format,
     return false;
   }
   if ((size_t)n < sizeof(message)) {
-    return SyslogClientSend(self, severity, &tv, message, (size_t)n);
+    return SyslogClientSend(self, severity, unixTime, message, (size_t)n);
   }
   char* bigMessage = malloc(n + 1);
   if (bigMessage == NULL) {
@@ -118,22 +119,23 @@ bool SyslogClientPrintf(SyslogClient* self, int severity, const char* format,
   vsnprintf(bigMessage, n + 1, format, args);
   va_end(args);
   const bool result =
-      SyslogClientSend(self, severity, &tv, bigMessage, (size_t)n);
+      SyslogClientSend(self, severity, unixTime, bigMessage, (size_t)n);
   const int errnoCopy = errno;
   free(bigMessage);
   errno = errnoCopy;
   return result;
 }
 
-static bool SyslogClientSendLocalFormat(SyslogClient* self, int serverity,
-                                        struct timeval* tv, const char* message,
+static bool SyslogClientSendLocalFormat(SyslogClient* self, int severity,
+                                        double unixTime, const char* message,
                                         size_t messageSize) {
+  time_t time = lround(floor(unixTime));
   struct tm tm;
-  localtime_r(&tv->tv_sec, &tm);
+  localtime_r(&time, &tm);
   char header[32];
   size_t headerSize = 0;
   headerSize += snprintf(header + headerSize, sizeof(header) - headerSize,
-                         "<%d>", self->facility | serverity);
+                         "<%d>", self->facility | severity);
   headerSize += strftime(header + headerSize, sizeof(header) - headerSize,
                          "%h %e %T ", &tm);
   char pid[32];
@@ -157,11 +159,11 @@ static bool SyslogClientSendLocalFormat(SyslogClient* self, int serverity,
 }
 
 static bool SyslogClientSendRemoteFormat(SyslogClient* self, int severity,
-                                         struct timeval* tv,
-                                         const char* message,
+                                         double unixTime, const char* message,
                                          size_t messageSize) {
+  time_t time = lround(floor(unixTime));
   struct tm tm;
-  localtime_r(&tv->tv_sec, &tm);
+  localtime_r(&time, &tm);
   char header[32];
   size_t headerSize = 0;
   headerSize += snprintf(header + headerSize, sizeof(header) - headerSize,
@@ -194,14 +196,14 @@ static bool SyslogClientSendRemoteFormat(SyslogClient* self, int severity,
   return self->transport->send(self->transport, iov, iovcnt);
 }
 
-bool SyslogClientSend(SyslogClient* self, int severity, struct timeval* tv,
+bool SyslogClientSend(SyslogClient* self, int severity, double unixTime,
                       const char* message, size_t message_size) {
   if (self && self->transport) {
     if (self->messageFormat == SYSLOG_MESSAGE_FORMAT_LOCAL) {
-      return SyslogClientSendLocalFormat(self, severity, tv, message,
+      return SyslogClientSendLocalFormat(self, severity, unixTime, message,
                                          message_size);
     } else if (self->messageFormat == SYSLOG_MESSAGE_FORMAT_REMOTE) {
-      return SyslogClientSendRemoteFormat(self, severity, tv, message,
+      return SyslogClientSendRemoteFormat(self, severity, unixTime, message,
                                           message_size);
     }
   }

@@ -1,5 +1,5 @@
-#include "syslog_transport.h"
-#include "unix_socket.h"
+#include "SyslogTransport.h"
+#include "UnixSocket.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
