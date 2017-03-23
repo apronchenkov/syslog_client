@@ -16,15 +16,15 @@ struct syslog_client {
   syslog_message_format message_format;
   int facility;
   size_t tag_size;
-  char *tag;
+  char* tag;
   size_t hostname_size;
-  char *hostname;
-  syslog_transport *transport;
+  char* hostname;
+  syslog_transport* transport;
 };
 
-static char *hostname() {
+static char* hostname() {
   size_t buffer_size = 8;
-  char *buffer = NULL;
+  char* buffer = NULL;
   do {
     free(buffer);
     if (buffer_size > buffer_size + buffer_size) {
@@ -40,8 +40,8 @@ static char *hostname() {
   return buffer;
 }
 
-syslog_client *syslog_client_create_default(int facility, const char *tag) {
-  syslog_transport *transport = syslog_transport_create_default();
+syslog_client* syslog_client_create_default(int facility, const char* tag) {
+  syslog_transport* transport = syslog_transport_create_default();
   if (transport) {
     return syslog_client_create(SYSLOG_MESSAGE_FORMAT_LOCAL, transport,
                                 facility, tag);
@@ -49,10 +49,10 @@ syslog_client *syslog_client_create_default(int facility, const char *tag) {
   return NULL;
 }
 
-syslog_client *syslog_client_create(syslog_message_format message_format,
-                                    syslog_transport *transport, int facility,
-                                    const char *tag) {
-  syslog_client *self = malloc(sizeof(syslog_client));
+syslog_client* syslog_client_create(syslog_message_format message_format,
+                                    syslog_transport* transport, int facility,
+                                    const char* tag) {
+  syslog_client* self = malloc(sizeof(syslog_client));
   if (!self) {
     const int errno_copy = errno;
     syslog_transport_destroy(transport);
@@ -83,7 +83,7 @@ syslog_client *syslog_client_create(syslog_message_format message_format,
   return self;
 }
 
-void syslog_client_destroy(syslog_client *self) {
+void syslog_client_destroy(syslog_client* self) {
   if (self) {
     free(self->tag);
     free(self->hostname);
@@ -92,8 +92,8 @@ void syslog_client_destroy(syslog_client *self) {
   }
 }
 
-bool syslog_client_printf(syslog_client *self, int serverity,
-                          const char *format, ...) {
+bool syslog_client_printf(syslog_client* self, int serverity,
+                          const char* format, ...) {
   struct timeval tv;
   if (gettimeofday(&tv, NULL) == -1) {
     return false;
@@ -110,7 +110,7 @@ bool syslog_client_printf(syslog_client *self, int serverity,
   if ((size_t)n < sizeof(message)) {
     return syslog_client_send(self, serverity, &tv, message, (size_t)n);
   }
-  char *big_message = malloc(n + 1);
+  char* big_message = malloc(n + 1);
   if (big_message == NULL) {
     return false;
   }
@@ -125,9 +125,9 @@ bool syslog_client_printf(syslog_client *self, int serverity,
   return result;
 }
 
-static bool syslog_client_send_local_format(syslog_client *self, int serverity,
-                                            struct timeval *tv,
-                                            const char *message,
+static bool syslog_client_send_local_format(syslog_client* self, int serverity,
+                                            struct timeval* tv,
+                                            const char* message,
                                             size_t message_size) {
   struct tm tm;
   localtime_r(&tv->tv_sec, &tm);
@@ -150,16 +150,16 @@ static bool syslog_client_send_local_format(syslog_client *self, int serverity,
   iov[iovcnt].iov_base = pid;
   iov[iovcnt].iov_len = pid_size;
   ++iovcnt;
-  iov[iovcnt].iov_base = (void *)message;
+  iov[iovcnt].iov_base = (void*)message;
   iov[iovcnt].iov_len = message_size;
   ++iovcnt;
   assert(iovcnt <= sizeof(iov) / sizeof(iov[0]));
   return self->transport->send(self->transport, iov, iovcnt);
 }
 
-static bool syslog_client_send_remote_format(syslog_client *self, int serverity,
-                                             struct timeval *tv,
-                                             const char *message,
+static bool syslog_client_send_remote_format(syslog_client* self, int serverity,
+                                             struct timeval* tv,
+                                             const char* message,
                                              size_t message_size) {
   struct tm tm;
   localtime_r(&tv->tv_sec, &tm);
@@ -188,15 +188,15 @@ static bool syslog_client_send_remote_format(syslog_client *self, int serverity,
   iov[iovcnt].iov_base = pid;
   iov[iovcnt].iov_len = pid_size;
   ++iovcnt;
-  iov[iovcnt].iov_base = (void *)message;
+  iov[iovcnt].iov_base = (void*)message;
   iov[iovcnt].iov_len = message_size;
   ++iovcnt;
   assert(iovcnt <= sizeof(iov) / sizeof(iov[0]));
   return self->transport->send(self->transport, iov, iovcnt);
 }
 
-bool syslog_client_send(syslog_client *self, int serverity, struct timeval *tv,
-                        const char *message, size_t message_size) {
+bool syslog_client_send(syslog_client* self, int serverity, struct timeval* tv,
+                        const char* message, size_t message_size) {
   if (self && self->transport) {
     if (self->message_format == SYSLOG_MESSAGE_FORMAT_LOCAL) {
       return syslog_client_send_local_format(self, serverity, tv, message,

@@ -12,9 +12,9 @@ struct iovec;
 
 typedef struct syslog_transport syslog_transport;
 
-typedef bool (*syslog_transport_send_func)(syslog_transport *,
-                                           const struct iovec *, size_t);
-typedef void (*syslog_transport_destroy_func)(syslog_transport *);
+typedef bool (*syslog_transport_send_func)(syslog_transport*,
+                                           const struct iovec*, size_t);
+typedef void (*syslog_transport_destroy_func)(syslog_transport*);
 
 /**
  * Base class for a transport.
@@ -35,18 +35,18 @@ struct syslog_transport {
 /**
  * Create a default transport to local syslog deamon.
  */
-syslog_transport *syslog_transport_create_default();
+syslog_transport* syslog_transport_create_default();
 
 /**
  * Destroy syslog transport.
  */
-static inline void syslog_transport_destroy(syslog_transport *self) {
+static inline void syslog_transport_destroy(syslog_transport* self) {
   if (self) {
     (*self->destroy)(self);
   }
 }
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
-#endif // SYSLOG_TRANSPORT_H_
+#endif  // SYSLOG_TRANSPORT_H_

@@ -10,4 +10,4 @@
 #define SYSLOG_SEVERITY_INFO (6)
 #define SYSLOG_SEVERITY_DEBUG (7)
 
-#endif // SYSLOG_SEVERITY_H_
+#endif  // SYSLOG_SEVERITY_H_

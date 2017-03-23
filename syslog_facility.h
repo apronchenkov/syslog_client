@@ -22,4 +22,4 @@
 #define SYSLOG_FACILITY_LOCAL6 (22 << 3)
 #define SYSLOG_FACILITY_LOCAL7 (23 << 3)
 
-#endif // SYSLOG_FACILITY_H_
+#endif  // SYSLOG_FACILITY_H_

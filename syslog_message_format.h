@@ -16,6 +16,6 @@ enum syslog_message_format {
 typedef enum syslog_message_format syslog_message_format;
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
-#endif // SYSLOG_MESSAGE_FORMAT_H_
+#endif  // SYSLOG_MESSAGE_FORMAT_H_
