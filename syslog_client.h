@@ -1,6 +1,4 @@
-#ifndef SYSLOG_CLIENT_H_
-#define SYSLOG_CLIENT_H_ 1
-
+#pragma once
 #include "syslog_facility.h"
 #include "syslog_message_format.h"
 #include "syslog_severity.h"
@@ -49,4 +47,3 @@ bool syslog_client_send(syslog_client* self, int serverity, struct timeval* tv,
 #ifdef __cplusplus
 }  // extern "C"
 #endif
-#endif  // SYSLOG_CLIENT_H_

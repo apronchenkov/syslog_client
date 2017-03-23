@@ -1,5 +1,4 @@
-#ifndef SYSLOG_FACILITY_H_
-#define SYSLOG_FACILITY_H_ 1
+#pragma once
 
 #define SYSLOG_FACILITY_KERN (0 << 3)
 #define SYSLOG_FACILITY_USER (1 << 3)
@@ -21,5 +20,3 @@
 #define SYSLOG_FACILITY_LOCAL5 (21 << 3)
 #define SYSLOG_FACILITY_LOCAL6 (22 << 3)
 #define SYSLOG_FACILITY_LOCAL7 (23 << 3)
-
-#endif  // SYSLOG_FACILITY_H_

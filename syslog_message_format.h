@@ -1,6 +1,4 @@
-#ifndef SYSLOG_MESSAGE_FORMAT_H_
-#define SYSLOG_MESSAGE_FORMAT_H_ 1
-
+#pragma once
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -18,4 +16,3 @@ typedef enum syslog_message_format syslog_message_format;
 #ifdef __cplusplus
 }  // extern "C"
 #endif
-#endif  // SYSLOG_MESSAGE_FORMAT_H_

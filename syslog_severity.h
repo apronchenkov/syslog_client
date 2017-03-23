@@ -1,5 +1,4 @@
-#ifndef SYSLOG_SEVERITY_H_
-#define SYSLOG_SEVERITY_H_ 1
+#pragma once
 
 #define SYSLOG_SEVERITY_EMERGENCY (0)
 #define SYSLOG_SEVERITY_ALERT (1)
@@ -9,5 +8,3 @@
 #define SYSLOG_SEVERITY_NOTICE (5)
 #define SYSLOG_SEVERITY_INFO (6)
 #define SYSLOG_SEVERITY_DEBUG (7)
-
-#endif  // SYSLOG_SEVERITY_H_

@@ -1,6 +1,4 @@
-#ifndef SYSLOG_TRANSPORT_H_
-#define SYSLOG_TRANSPORT_H_ 1
-
+#pragma once
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -49,4 +47,3 @@ static inline void syslog_transport_destroy(syslog_transport* self) {
 #ifdef __cplusplus
 }  // extern "C"
 #endif
-#endif  // SYSLOG_TRANSPORT_H_
