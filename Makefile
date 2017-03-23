@@ -1,11 +1,11 @@
 .PHONY: all clean
 
 SRCS = \
-	include/syslog_client.h \
-	include/syslog_facility.h \
-	include/syslog_message_format.h \
-	include/syslog_severity.h \
-	include/syslog_transport.h \
+	syslog_client.h \
+	syslog_facility.h \
+	syslog_message_format.h \
+	syslog_severity.h \
+	syslog_transport.h \
 	syslog_client.c \
 	syslog_transport.c \
 	unix_socket.c \
