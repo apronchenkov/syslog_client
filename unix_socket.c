@@ -7,8 +7,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-static bool unix_socket_connect(int socket, const void* address,
-                                socklen_t address_len) {
+static bool UnixSocketConnect(int socket, const void* address,
+                              socklen_t address_len) {
   bool ok;
   do {
     ok = (connect(socket, (const struct sockaddr*)address, address_len) == 0);
@@ -16,7 +16,7 @@ static bool unix_socket_connect(int socket, const void* address,
   return ok;
 }
 
-static bool unix_socket_set_cloexec(int socket) {
+static bool UnixSocketSetCloexec(int socket) {
   int flags;
   bool ok;
   do {
@@ -31,7 +31,7 @@ static bool unix_socket_set_cloexec(int socket) {
   return ok;
 }
 
-int unix_socket_open(const char* path, int socket_type) {
+int UnixSocketOpen(const char* path, int socket_type) {
   int sock = -1;
   struct sockaddr_un sockaddr_un;
   if (sizeof(sockaddr_un.sun_path) <= strlen(path)) {
@@ -45,23 +45,23 @@ int unix_socket_open(const char* path, int socket_type) {
   if (sock == -1) {
     goto on_fail;
   }
-  if (!unix_socket_connect(sock, &sockaddr_un, sizeof(sockaddr_un))) {
+  if (!UnixSocketConnect(sock, &sockaddr_un, sizeof(sockaddr_un))) {
     goto on_fail;
   }
-  if (!unix_socket_set_cloexec(sock)) {
+  if (!UnixSocketSetCloexec(sock)) {
     goto on_fail;
   }
   return sock;
 on_fail:
   if (sock != -1) {
     const int errno_copy = errno;
-    unix_socket_close(sock);
+    UnixSocketClose(sock);
     errno = errno_copy;
   }
   return -1;
 }
 
-void unix_socket_close(int socket) {
+void UnixSocketClose(int socket) {
   bool ok;
   do {
     ok = (close(socket) == 0);
@@ -74,7 +74,7 @@ void unix_socket_close(int socket) {
   }
 }
 
-ssize_t unix_socket_write(int socket, const struct iovec* iov, size_t iovcnt) {
+ssize_t UnixSocketWrite(int socket, const struct iovec* iov, size_t iovcnt) {
   struct msghdr message;
   ssize_t result;
   memset(&message, 0, sizeof(message));

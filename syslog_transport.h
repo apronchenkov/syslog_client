@@ -8,37 +8,37 @@ extern "C" {
 
 struct iovec;
 
-typedef struct syslog_transport syslog_transport;
+typedef struct SyslogTransport SyslogTransport;
 
-typedef bool (*syslog_transport_send_func)(syslog_transport*,
-                                           const struct iovec*, size_t);
-typedef void (*syslog_transport_destroy_func)(syslog_transport*);
+typedef bool (*SyslogTransportSendFunc)(SyslogTransport*, const struct iovec*,
+                                        size_t);
+typedef void (*SyslogTransportDestroyFunc)(SyslogTransport*);
 
 /**
  * Base class for a transport.
  */
-struct syslog_transport {
+struct SyslogTransport {
   /**
    * (virtual method) Sends a message without bufferization.
    * Returns true if successful.
    */
-  syslog_transport_send_func send;
+  SyslogTransportSendFunc send;
 
   /**
    * (virtual method) Destructor.
    */
-  syslog_transport_destroy_func destroy;
+  SyslogTransportDestroyFunc destroy;
 };
 
 /**
  * Create a default transport to local syslog deamon.
  */
-syslog_transport* syslog_transport_create_default();
+SyslogTransport* SyslogTransportCreateDefault();
 
 /**
  * Destroy syslog transport.
  */
-static inline void syslog_transport_destroy(syslog_transport* self) {
+static inline void SyslogTransportDestroy(SyslogTransport* self) {
   if (self) {
     (*self->destroy)(self);
   }

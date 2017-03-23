@@ -6,12 +6,12 @@
 extern "C" {
 #endif
 
-enum syslog_message_format {
+enum SyslogMessageFormat {
   SYSLOG_MESSAGE_FORMAT_LOCAL,
   SYSLOG_MESSAGE_FORMAT_REMOTE
 };
 
-typedef enum syslog_message_format syslog_message_format;
+typedef enum SyslogMessageFormat SyslogMessageFormat;
 
 #ifdef __cplusplus
 }  // extern "C"
