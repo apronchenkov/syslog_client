@@ -1,0 +1,18 @@
+c_library(
+    name='syslog_client',
+    srcs=[
+        'syslog_client.c',
+        'syslog_transport.c',
+        'unix_socket.c',
+    ],
+)
+
+c_binary(
+    name='sample',
+    srcs=[
+        'sample.c',
+    ],
+    deps=[
+        ':syslog_client',
+    ],
+)
