@@ -1,4 +1,4 @@
-#include "SyslogTransport.h"
+#include "public/SyslogTransport.h"
 #include "UnixSocket.h"
 #include <errno.h>
 #include <pthread.h>

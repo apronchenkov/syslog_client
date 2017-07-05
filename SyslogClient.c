@@ -1,5 +1,5 @@
 #define _BSD_SOURCE
-#include "SyslogClient.h"
+#include "public/SyslogClient.h"
 #include <assert.h>
 #include <errno.h>
 #include <math.h>

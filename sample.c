@@ -1,4 +1,4 @@
-#include "SyslogClient.h"
+#include <github.com/apronchenkov/syslog_client/public/SyslogClient.h>
 
 int main(int argc, char** argv) {
   (void)argc;
