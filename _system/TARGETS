@@ -1,0 +1,23 @@
+import os
+
+if os.uname().sysname == 'Darwin':
+    # clang specific
+    c_library(
+        name='pthread',
+        transitive_compiler_flags=[
+            '-pthread',
+        ],
+    )
+elif os.uname().sysname == 'Linux':
+    # gcc specific
+    c_library(
+        name='pthread',
+        transitive_compiler_flags=[
+            '-pthread',
+        ],
+        linker_flags=[
+            '-pthread',
+        ],
+    )
+else:
+    assert False, "Unknown system type: {}".format(os.uname().sysname)

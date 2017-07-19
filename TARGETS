@@ -1,14 +1,25 @@
 c_library(
     name='syslog_client',
     srcs=[
-        'syslog_client.c',
-        'syslog_transport.c',
-        'unix_socket.c',
+        'SyslogClient.c',
+        'SyslogTransport.c',
+        'UnixSocket.c',
+    ],
+    headers=[
+        'UnixSocket.h',
+        'public/SyslogClient.h',
+        'public/SyslogFacility.h',
+        'public/SyslogMessageFormat.h',
+        'public/SyslogSeverity.h',
+        'public/SyslogTransport.h',
+    ],
+    deps=[
+        '_system:pthread',
     ],
 )
 
 c_binary(
-    name='sample',
+    name='syslog_sample',
     srcs=[
         'sample.c',
     ],
