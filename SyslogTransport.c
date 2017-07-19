@@ -14,7 +14,7 @@ struct SyslogTransportDefault {
   int socket;
 };
 
-static void SyslogTransportDefaultClose(SyslogTransportDefault* self) {
+static void SyslogTransportDefaultClose(SyslogTransportDefault *self) {
   if (!self->socketType) {
     UnixSocketClose(self->socket);
     self->socketType = 0;
@@ -22,14 +22,14 @@ static void SyslogTransportDefaultClose(SyslogTransportDefault* self) {
   }
 }
 
-static void SyslogTransportDefaultDestroy(SyslogTransportDefault* self) {
+static void SyslogTransportDefaultDestroy(SyslogTransportDefault *self) {
   pthread_mutex_destroy(&self->lock);
   SyslogTransportDefaultClose(self);
   free(self);
 }
 
-static bool SyslogTransportDefaultReconnect(SyslogTransportDefault* self) {
-  static const char* PATHS[] = {"/dev/log", "/var/run/syslog", "/var/run/log",
+static bool SyslogTransportDefaultReconnect(SyslogTransportDefault *self) {
+  static const char *PATHS[] = {"/dev/log", "/var/run/syslog", "/var/run/log",
                                 NULL};
   static const int TYPES[] = {SOCK_DGRAM, SOCK_STREAM, 0};
   SyslogTransportDefaultClose(self);
@@ -46,13 +46,13 @@ static bool SyslogTransportDefaultReconnect(SyslogTransportDefault* self) {
   return false;
 }
 
-static void IoVecAdvance(struct iovec* iov, size_t* iovcnt, size_t offset) {
+static void IoVecAdvance(struct iovec *iov, size_t *iovcnt, size_t offset) {
   size_t i = 0, j;
   for (j = 0; j < *iovcnt; ++j) {
     if (offset >= iov[j].iov_len) {
       offset -= iov[j].iov_len;
     } else {
-      iov[i].iov_base = (char*)iov[j].iov_base + offset;
+      iov[i].iov_base = (char *)iov[j].iov_base + offset;
       iov[i].iov_len = iov[j].iov_len - offset;
       offset = 0;
       ++i;
@@ -61,8 +61,8 @@ static void IoVecAdvance(struct iovec* iov, size_t* iovcnt, size_t offset) {
   *iovcnt = i;
 }
 
-static bool SyslogTransportDefaultSendImpl(SyslogTransportDefault* self,
-                                           const struct iovec* iov,
+static bool SyslogTransportDefaultSendImpl(SyslogTransportDefault *self,
+                                           const struct iovec *iov,
                                            size_t iovcnt) {
   if (self->socketType == SOCK_DGRAM) {
     return UnixSocketWrite(self->socket, iov, iovcnt) != -1;
@@ -87,8 +87,8 @@ static bool SyslogTransportDefaultSendImpl(SyslogTransportDefault* self,
   }
 }
 
-bool SyslogTransportDefaultSend(SyslogTransportDefault* self,
-                                const struct iovec* iov, size_t iovcnt) {
+bool SyslogTransportDefaultSend(SyslogTransportDefault *self,
+                                const struct iovec *iov, size_t iovcnt) {
   pthread_mutex_lock(&self->lock);
   if (SyslogTransportDefaultSendImpl(self, iov, iovcnt) ||
       (SyslogTransportDefaultReconnect(self) &&
@@ -104,8 +104,8 @@ bool SyslogTransportDefaultSend(SyslogTransportDefault* self,
   }
 }
 
-SyslogTransport* SyslogTransportCreateDefault() {
-  SyslogTransportDefault* self = malloc(sizeof(SyslogTransportDefault));
+SyslogTransport *SyslogTransportCreateDefault() {
+  SyslogTransportDefault *self = malloc(sizeof(SyslogTransportDefault));
   if (!self) {
     return NULL;
   }
@@ -121,5 +121,5 @@ SyslogTransport* SyslogTransportCreateDefault() {
     errno = errnoCopy;
     return NULL;
   }
-  return (SyslogTransport*)self;
+  return (SyslogTransport *)self;
 }

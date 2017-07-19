@@ -7,11 +7,11 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-static bool UnixSocketConnect(int socket, const void* address,
+static bool UnixSocketConnect(int socket, const void *address,
                               socklen_t address_len) {
   bool ok;
   do {
-    ok = (connect(socket, (const struct sockaddr*)address, address_len) == 0);
+    ok = (connect(socket, (const struct sockaddr *)address, address_len) == 0);
   } while (!ok && errno == EINTR);
   return ok;
 }
@@ -31,7 +31,7 @@ static bool UnixSocketSetCloexec(int socket) {
   return ok;
 }
 
-int UnixSocketOpen(const char* path, int socket_type) {
+int UnixSocketOpen(const char *path, int socket_type) {
   int sock = -1;
   struct sockaddr_un sockaddr_un;
   if (sizeof(sockaddr_un.sun_path) <= strlen(path)) {
@@ -74,11 +74,11 @@ void UnixSocketClose(int socket) {
   }
 }
 
-ssize_t UnixSocketWrite(int socket, const struct iovec* iov, size_t iovcnt) {
+ssize_t UnixSocketWrite(int socket, const struct iovec *iov, size_t iovcnt) {
   struct msghdr message;
   ssize_t result;
   memset(&message, 0, sizeof(message));
-  message.msg_iov = (struct iovec*)iov;
+  message.msg_iov = (struct iovec *)iov;
   message.msg_iovlen = iovcnt;
   do {
     result = sendmsg(socket, &message, 0);

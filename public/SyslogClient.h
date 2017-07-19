@@ -15,32 +15,32 @@ typedef struct SyslogClient SyslogClient;
 /**
  * Creates a syslog client for local syslog deamon.
  */
-SyslogClient* SyslogClientCreateDefault(int facility, const char* tag);
+SyslogClient *SyslogClientCreateDefault(int facility, const char *tag);
 
 /**
  * Creates a syslog client with a specific message format and based on a
  * specific transport. Ownership of the transport is transferred to the client.
  */
-SyslogClient* SyslogClientCreate(SyslogMessageFormat messageFormat,
-                                 SyslogTransport* transport, int facility,
-                                 const char* tag);
+SyslogClient *SyslogClientCreate(SyslogMessageFormat messageFormat,
+                                 SyslogTransport *transport, int facility,
+                                 const char *tag);
 
 /**
  * Destroy syslog client.
  */
-void SyslogClientDestroy(SyslogClient* self);
+void SyslogClientDestroy(SyslogClient *self);
 
 /**
  * Send a formatted message to syslog.
  */
-bool SyslogClientPrintf(SyslogClient* self, int severity, const char* format,
+bool SyslogClientPrintf(SyslogClient *self, int severity, const char *format,
                         ...);
 
 /**
  * Send a message to syslog.
  */
-bool SyslogClientSend(SyslogClient* self, int severity, double unixTime,
-                      const char* message, size_t messageSize);
+bool SyslogClientSend(SyslogClient *self, int severity, double unixTime,
+                      const char *message, size_t messageSize);
 
 #ifdef __cplusplus
 }  // extern "C"
