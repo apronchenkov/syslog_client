@@ -16,6 +16,9 @@ c_library(
     deps=[
         '_system:pthread',
     ],
+    linker_flags=[
+        '-lm',
+    ],
 )
 
 c_binary(
