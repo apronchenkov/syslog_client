@@ -13,9 +13,6 @@ c_library(
         'public/SyslogSeverity.h',
         'public/SyslogTransport.h',
     ],
-    deps=[
-        '_system:pthread',
-    ],
     linker_flags=[
         '-lm',
     ],
