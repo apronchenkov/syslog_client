@@ -1,4 +1,4 @@
-c_library(
+cc_library(
     name='syslog_client',
     srcs=[
         'SyslogClient.c',
@@ -18,7 +18,7 @@ c_library(
     ],
 )
 
-c_binary(
+cc_binary(
     name='syslog_sample',
     srcs=[
         'sample.c',
