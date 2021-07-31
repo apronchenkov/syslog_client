@@ -1,5 +1,6 @@
 #define _DEFAULT_SOURCE
 #include "public/SyslogClient.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <math.h>
@@ -99,31 +100,47 @@ bool SyslogClientPrintf(SyslogClient *self, int severity, const char *format,
     return false;
   }
   const double unixTime = tv.tv_sec + 1e-6 * tv.tv_usec;
-  char message[128];
   va_list args;
-  va_start(args, format);
-  const int n = vsnprintf(message, sizeof(message), format, args);
-  va_end(args);
-  if (n < 0) {
-    errno = EINVAL; /* FIXME: What is the right code? */
-    return false;
-  }
-  if ((size_t)n < sizeof(message)) {
+  if (format[0] == '\0') {
+    return SyslogClientSend(self, severity, unixTime, NULL, 0);
+  } else if (format[0] == '%' && format[1] == 's' && format[2] == '\0') {
+    va_start(args, format);
+    const char *message = va_arg(args, const char *);
+    va_end(args);
+    return SyslogClientSend(self, severity, unixTime, message, strlen(message));
+  } else if (format[0] == '%' && format[1] == '.' && format[2] == '*' &&
+             format[3] == 's' && format[4] == '\0') {
+    va_start(args, format);
+    const int n = va_arg(args, int);
+    const char *message = va_arg(args, const char *);
+    va_end(args);
     return SyslogClientSend(self, severity, unixTime, message, (size_t)n);
+  } else {
+    char message[128];
+    va_start(args, format);
+    const int n = vsnprintf(message, sizeof(message), format, args);
+    va_end(args);
+    if (n < 0) {
+      errno = EINVAL; /* FIXME: What is the right code? */
+      return false;
+    }
+    if ((size_t)n < sizeof(message)) {
+      return SyslogClientSend(self, severity, unixTime, message, (size_t)n);
+    }
+    char *bigMessage = malloc(n + 1);
+    if (bigMessage == NULL) {
+      return false;
+    }
+    va_start(args, format);
+    vsnprintf(bigMessage, n + 1, format, args);
+    va_end(args);
+    const bool result =
+        SyslogClientSend(self, severity, unixTime, bigMessage, (size_t)n);
+    const int errnoCopy = errno;
+    free(bigMessage);
+    errno = errnoCopy;
+    return result;
   }
-  char *bigMessage = malloc(n + 1);
-  if (bigMessage == NULL) {
-    return false;
-  }
-  va_start(args, format);
-  vsnprintf(bigMessage, n + 1, format, args);
-  va_end(args);
-  const bool result =
-      SyslogClientSend(self, severity, unixTime, bigMessage, (size_t)n);
-  const int errnoCopy = errno;
-  free(bigMessage);
-  errno = errnoCopy;
-  return result;
 }
 
 static bool SyslogClientSendLocalFormat(SyslogClient *self, int severity,
