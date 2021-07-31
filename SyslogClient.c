@@ -157,22 +157,14 @@ static bool SyslogClientSendLocalFormat(SyslogClient *self, int severity,
                          "%h %e %T ", &tm);
   char pid[32];
   size_t pid_size = snprintf(pid, sizeof(pid), "[%lu]: ", (long)getpid());
-  size_t iovcnt = 0;
-  struct iovec iov[4];
-  iov[iovcnt].iov_base = header;
-  iov[iovcnt].iov_len = headerSize;
-  ++iovcnt;
-  iov[iovcnt].iov_base = self->tag;
-  iov[iovcnt].iov_len = self->tagSize;
-  ++iovcnt;
-  iov[iovcnt].iov_base = pid;
-  iov[iovcnt].iov_len = pid_size;
-  ++iovcnt;
-  iov[iovcnt].iov_base = (void *)message;
-  iov[iovcnt].iov_len = messageSize;
-  ++iovcnt;
-  assert(iovcnt <= sizeof(iov) / sizeof(iov[0]));
-  return self->transport->send(self->transport, iov, iovcnt);
+  struct iovec iov[] = {
+      {.iov_base = header, .iov_len = headerSize},
+      {.iov_base = self->tag, .iov_len = self->tagSize},
+      {.iov_base = pid, .iov_len = pid_size},
+      {.iov_base = (void *)message, .iov_len = messageSize},
+  };
+  return self->transport->send(self->transport, iov,
+                               sizeof(iov) / sizeof(iov[0]));
 }
 
 static bool SyslogClientSendRemoteFormat(SyslogClient *self, int severity,
@@ -189,28 +181,16 @@ static bool SyslogClientSendRemoteFormat(SyslogClient *self, int severity,
                          "%h %e %T ", &tm);
   char pid[32];
   size_t pidSize = snprintf(pid, sizeof(pid), "[%lu]: ", (long)getpid());
-  size_t iovcnt = 0;
-  struct iovec iov[6];
-  iov[iovcnt].iov_base = header;
-  iov[iovcnt].iov_len = headerSize;
-  ++iovcnt;
-  iov[iovcnt].iov_base = self->hostname;
-  iov[iovcnt].iov_len = self->hostnameSize;
-  ++iovcnt;
-  iov[iovcnt].iov_base = " ";
-  iov[iovcnt].iov_len = 1;
-  ++iovcnt;
-  iov[iovcnt].iov_base = self->tag;
-  iov[iovcnt].iov_len = self->tagSize;
-  ++iovcnt;
-  iov[iovcnt].iov_base = pid;
-  iov[iovcnt].iov_len = pidSize;
-  ++iovcnt;
-  iov[iovcnt].iov_base = (void *)message;
-  iov[iovcnt].iov_len = messageSize;
-  ++iovcnt;
-  assert(iovcnt <= sizeof(iov) / sizeof(iov[0]));
-  return self->transport->send(self->transport, iov, iovcnt);
+  struct iovec iov[] = {
+      {.iov_base = header, .iov_len = headerSize},
+      {.iov_base = self->hostname, .iov_len = self->hostnameSize},
+      {.iov_base = " ", .iov_len = 1},
+      {.iov_base = self->tag, .iov_len = self->tagSize},
+      {.iov_base = pid, .iov_len = pidSize},
+      {.iov_base = (void *)message, .iov_len = messageSize},
+  };
+  return self->transport->send(self->transport, iov,
+                               sizeof(iov) / sizeof(iov[0]));
 }
 
 bool SyslogClientSend(SyslogClient *self, int severity, double unixTime,
